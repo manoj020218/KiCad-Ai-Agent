@@ -102,9 +102,28 @@ function deriveKiCadSitePackages(pythonExe: string): string | undefined {
 }
 
 /**
+ * Quick, synchronous check that `pcbnew` actually imports under the given
+ * Python executable. Used to avoid trusting a project venv (e.g. one set up
+ * only for running the JS/TS or pytest dev suites) that happens to exist but
+ * has no KiCad bindings installed.
+ */
+function pythonHasPcbnew(pythonExe: string): boolean {
+  try {
+    execFileSync(pythonExe, ["-c", "import pcbnew"], {
+      timeout: 5000,
+      stdio: ["ignore", "ignore", "ignore"],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Find the Python executable to use.
- * Prioritizes project venvs, then explicit overrides, then KiCAD-bundled Python
- * before falling back to system Python.
+ * Prioritizes project venvs (only if pcbnew is actually importable there),
+ * then explicit overrides, then KiCAD-bundled Python before falling back to
+ * system Python.
  */
 function findPythonExecutable(scriptPath: string): string {
   const isWindows = process.platform === "win32";
@@ -122,8 +141,13 @@ function findPythonExecutable(scriptPath: string): string {
 
   for (const venvPath of venvPaths) {
     if (existsSync(venvPath)) {
-      logger.info(`Found virtual environment Python at: ${venvPath}`);
-      return venvPath;
+      if (pythonHasPcbnew(venvPath)) {
+        logger.info(`Found virtual environment Python at: ${venvPath}`);
+        return venvPath;
+      }
+      logger.info(
+        `Found virtual environment Python at: ${venvPath}, but pcbnew is not importable there — skipping (likely a dev/test-only venv)`,
+      );
     }
   }
 
@@ -267,7 +291,7 @@ export class KiCADMcpServer {
     // Initialize the MCP server
     this.server = new McpServer({
       name: "kicad-mcp-server",
-      version: "2.4.0",
+      version: "2.6.0",
       description: "MCP server for KiCAD PCB design operations",
     });
     // Create the ready promise (resolved when Python sends {"type":"ready"})
