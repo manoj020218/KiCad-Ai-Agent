@@ -5,7 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from "express";
-import { spawn, exec, execSync, ChildProcess } from "child_process";
+import { spawn, exec, execSync, execFileSync, ChildProcess } from "child_process";
 import { existsSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { logger } from "./logger.js";
@@ -414,33 +414,26 @@ export class KiCADMcpServer {
     if (pythonExecutableAvailable && existsSync(this.kicadScriptPath)) {
       logger.info("Validating pcbnew module access...");
 
-      const testCommand = `"${pythonExe}" -c "import pcbnew; print('OK')"`;
-
       try {
-        const { stdout, stderr } = await new Promise<{
-          stdout: string;
-          stderr: string;
-        }>((resolve, reject) => {
-          exec(
-            testCommand,
-            {
-              timeout: 5000,
-              env: { ...process.env },
-            },
-            (error: any, stdout: string, stderr: string) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve({ stdout, stderr });
-              }
-            },
-          );
-        });
+        // Use a synchronous, no-shell spawn here (not the async exec()
+        // helper): on Windows, spawning a child while this process's own
+        // stdin/stdout are MCP stdio pipes can crash the whole server with
+        // an unhandled 'read ENOTCONN' error from the async pipe-duplication
+        // path. execFileSync avoids that pipe-wrapping entirely.
+        const stdout = execFileSync(
+          pythonExe,
+          ["-c", "import pcbnew; print('OK')"],
+          {
+            timeout: 8000,
+            env: { ...process.env },
+            stdio: ["ignore", "pipe", "pipe"],
+            encoding: "utf8",
+          },
+        );
 
         if (!stdout.includes("OK")) {
           errors.push("pcbnew module import test failed");
           errors.push(`Output: ${stdout}`);
-          errors.push(`Errors: ${stderr}`);
 
           if (isWindows) {
             errors.push("");
@@ -458,16 +451,28 @@ export class KiCADMcpServer {
           logger.info("✓ pcbnew module validated successfully");
         }
       } catch (error: any) {
-        errors.push(`pcbnew validation failed: ${error.message}`);
+        // A slow/AV-scanned first launch of KiCAD's bundled python can
+        // outrun this quick check on Windows (import alone can take longer
+        // than expected under real-time antivirus scanning). That's not
+        // proof pcbnew is broken — the persistent spawn below does the real
+        // readiness check with a much longer budget — so don't treat a mere
+        // timeout here as fatal.
+        if (error.code === "ETIMEDOUT" || error.signal === "SIGTERM") {
+          logger.warn(
+            `pcbnew quick-check timed out (${error.message}); continuing — full startup will confirm readiness.`,
+          );
+        } else {
+          errors.push(`pcbnew validation failed: ${error.message}`);
 
-        if (isWindows) {
-          errors.push("");
-          errors.push("This usually means:");
-          errors.push("- KiCAD is not installed");
-          errors.push("- PYTHONPATH is incorrect");
-          errors.push("- Python cannot find pcbnew module");
-          errors.push("");
-          errors.push("Quick fix: Run .\\setup-windows.ps1");
+          if (isWindows) {
+            errors.push("");
+            errors.push("This usually means:");
+            errors.push("- KiCAD is not installed");
+            errors.push("- PYTHONPATH is incorrect");
+            errors.push("- Python cannot find pcbnew module");
+            errors.push("");
+            errors.push("Quick fix: Run .\\setup-windows.ps1");
+          }
         }
       }
     }
@@ -583,13 +588,17 @@ export class KiCADMcpServer {
         });
       }
 
-      // ——— Phase 2: wait for Python READY ———
-      logger.info("Waiting for Python process to be ready...");
-      await this.waitForReady(120_000);
-      logger.info("Python process is ready.");
-      // ——— Phase 3: connect MCP transport immediately ———
-      // The transport must be live before any client timeout fires,
-      // regardless of how long warm-up takes.
+      // ——— Phase 2: connect MCP transport immediately ———
+      // The transport must be live before any client timeout fires
+      // (Claude Desktop/Code's MCP handshake gives up after ~30 s), no
+      // matter how long the KiCAD Python backend takes to warm up
+      // (wxApp + pcbnew + symbol-library init has been observed to take
+      // 55-125 s, worse under real-time AV scanning of KiCad's bundled
+      // python.exe). Readiness-wait and warm-up both moved to Phase 3,
+      // running in the background *after* connect() so they can never
+      // delay or block the client handshake. Tool calls issued before the
+      // Python side is ready simply sit in the OS pipe / request queue
+      // until it starts reading — nothing is lost, only delayed.
       logger.info("Connecting MCP server to STDIO transport...");
       try {
         await this.server.connect(this.stdioTransport);
@@ -598,19 +607,24 @@ export class KiCADMcpServer {
         logger.error(`Failed to connect to STDIO transport: ${error}`);
         throw error;
       }
-      // ——— Phase 4: background warm-up (does not block MCP) ———
-      // Warm-up can take 55-125 s (wxApp + symbol library parse), but
-      // the MCP transport is already live so the client timeout does not
-      // apply.  Tools invoked during warm-up will work; the first
-      // search_symbols may be slower if warm-up hasn't completed yet.
-      logger.info("Sending warm-up command (background)...");
-      await this.runWarmup(120_000);
-      logger.info("Warm-up complete — pcbnew/wxApp initialised");
 
-      // Write a ready message to stderr (for debugging)
-      process.stderr.write("KiCAD MCP SERVER READY\n");
-
-      logger.info("KiCAD MCP server started and ready");
+      // ——— Phase 3: background readiness + warm-up (does not block MCP) ———
+      logger.info("Waiting for Python process to be ready (background)...");
+      this.waitForReady(120_000)
+        .then(async () => {
+          logger.info("Python process is ready.");
+          logger.info("Sending warm-up command (background)...");
+          await this.runWarmup(120_000);
+          logger.info("Warm-up complete — pcbnew/wxApp initialised");
+          process.stderr.write("KiCAD MCP SERVER READY\n");
+          logger.info("KiCAD MCP server started and ready");
+        })
+        .catch((error) => {
+          logger.error(
+            `KiCAD Python backend never became ready: ${error}. ` +
+              "The MCP connection stays up; tool calls that need KiCAD will fail or hang until this is resolved.",
+          );
+        });
     } catch (error) {
       logger.error(`Failed to start KiCAD MCP server: ${error}`);
       throw error;

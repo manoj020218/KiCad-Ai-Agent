@@ -1,7 +1,7 @@
 {
-  "name": "kicad-mcp",
+  "name": "kicad-ai-agent",
   "version": "2.6.0",
-  "description": "AI-assisted PCB design with KiCAD via Model Context Protocol",
+  "description": "Text-to-schematic, layout, and manufacturing-file AI agent for KiCad via Model Context Protocol (fork of kicad-mcp)",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
