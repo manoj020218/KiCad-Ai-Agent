@@ -107,6 +107,16 @@ connected` errors at full-hierarchy ERC.
 Per-sheet ERC will warn about "undriven" globals whose flag lives on
 another sheet — that resolves at full-hierarchy ERC (§4).
 
+`batch_add_and_connect` prints its own heuristic warning, e.g. `Power nets
+without PWR_FLAG: VIN_BIAS`, whenever a net is made up entirely of
+passive/input pins. This heuristic is **more conservative than real ERC**
+— a net feeding only `input`-typed pins (an op-amp's `+`, for instance)
+does not actually need a flag, only nets with `power_in`-typed pins do.
+Treat the warning as a hint to double-check, not as an instruction to add
+a flag everywhere it fires; `run_erc` is the ground truth (field-tested
+2026-09-17: an op-amp non-inverting-input bias net triggered this warning
+and still passed ERC with 0 errors/warnings, unflagged).
+
 ---
 
 ## 6. The 1.27 mm connection grid
@@ -221,3 +231,29 @@ Converting label-pairs into real wires is **placement judgment, not a safe
 mass operation** — component repositioning and per-pin label management
 are involved; do it collaboratively per sheet, verifying each with the
 golden-netlist diff.
+
+**Residual overlap after the automated passes (field-tested 2026-09-17):**
+`lint_schematic_cosmetic` + `autoplace_schematic_fields` reliably prevent
+Reference/Value fields from colliding with labels or bodies, and an
+isolated component (no near neighbor sharing its nets) renders clean at
+the guide's ~12.7 mm spacing. Two residual overlap patterns are *not*
+fixed by either pass and are not spacing problems — increasing
+inter-component distance does not help:
+
+1. **Net label vs. the pin's own number text**, on any multi-pin symbol
+   (a 555, an MCU module, …): the label anchors at the pin, same as the
+   pin number, so the two texts sit on top of each other. Cosmetic only —
+   confirmed via golden-netlist diff and ERC across three example builds
+   that this never affects connectivity — but it makes a raw render hard
+   to read.
+2. **Local labels on a tight-pitch connector** (e.g. a 2.54 mm header):
+   adjacent pins are closer together than the label text is tall, so
+   per-pin labels on neighboring pins overlap regardless of how far the
+   connector sits from everything else.
+
+Neither is currently fixed by an automated pass. Treat a first render as a
+**connectivity sanity check** (does the topology look roughly right, are
+there stray disconnected parts) rather than a publishable diagram — verify
+correctness with ERC + `generate_netlist`, not by eyeballing label
+legibility. Final visual polish on a dense sheet is manual/GUI work, same
+as label-to-wire conversion above.

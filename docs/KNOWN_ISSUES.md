@@ -133,6 +133,64 @@ traversal, `sync_schematic_to_board`) now return errors instead.
 
 ---
 
+### 8. `kicad-cli`-backed tool calls can exceed a 30s client timeout
+
+**Status:** KNOWN — environment-dependent, workaround is "just retry"
+
+**Symptoms:** `run_erc`, `export_*`, and `get_schematic_view` occasionally
+report `Command timeout after 30s` even though the operation is not stuck.
+
+**Root cause:** these tools shell out to `kicad-cli.exe`, which is a
+heavyweight process — on a machine with limited free RAM and/or active
+antivirus file scanning, cold-starting it alone measured **~30–31s real
+time** (verified 2026-09-17, `time kicad-cli sch erc ...`), independent of
+schematic size (a 6-component and an 18-net schematic both took the same
+~30s). This lands right at or just over a 30s client-side tool-call
+timeout, so the *first* call after a file change often times out while the
+underlying `kicad-cli` process completes successfully moments later.
+
+**Workaround:** on timeout, simply retry the same call once — it typically
+returns immediately on retry. Don't treat a single timeout as a sign the
+schematic or the server is broken; cross-check with the file on disk
+(e.g. `list_schematic_components`) if in doubt.
+
+---
+
+### 9. `get_schematic_view`'s PNG conversion can silently fall back to raw SVG text
+
+**Status:** KNOWN — Windows-specific dependency gap
+
+**Symptoms:** `get_schematic_view` (default `format: "png"`) returns a
+message `No PNG converter available — returning SVG. Install pymupdf,
+inkscape, or imagemagick.` followed by the full SVG as text — for a modest
+schematic this can be 150k+ characters, unusable for visual inspection and
+expensive in an LLM context window.
+
+**Root cause:** the server's PNG path needs `cairosvg`, which itself needs
+the native `libcairo-2.dll`. On Windows, `pip install cairosvg` installs
+the Python wheel but does **not** bundle that native DLL (no system GTK3
+runtime provides it by default), so `import cairosvg` raises `OSError: no
+library called "cairo-2" was found` even though the package shows up in
+`pip list`. Confirmed reproducible in both the project `.venv` and KiCad's
+bundled Python (2026-09-17).
+
+**Workaround used during Phase 2 validation:** `pip install pymupdf` into
+the project `.venv` (pure-Python wheel, no native DLL gap) and rasterize
+the `export_schematic_svg` output locally:
+
+```python
+import fitz  # pymupdf
+page = fitz.open("schematic.svg")[0]
+page.get_pixmap(matrix=fitz.Matrix(4, 4)).save("schematic.png")
+```
+
+**Real fix (not yet done):** either bundle/vendor a working cairo runtime
+for Windows, or switch `get_schematic_view`'s own PNG path to use
+`pymupdf` instead of `cairosvg` — pymupdf does not have this native-DLL
+dependency problem.
+
+---
+
 ## Recently Fixed (v2.2.0 - v2.2.3)
 
 ### B.Cu Footprint Routing (Fixed v2.2.3)
