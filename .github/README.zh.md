@@ -11,8 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](../docs/PLATFORM_GUIDE.md)
 [![KiCAD](https://img.shields.io/badge/KiCAD-9.0+-green.svg)](https://www.kicad.org/)
-[![Stars](https://img.shields.io/github/stars/mixelpixx/KiCAD-MCP-Server.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/stargazers)
-[![Discussions](https://img.shields.io/badge/community-Discussions-orange.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions)
+[![Stars](https://img.shields.io/github/stars/manoj020218/KiCad-Ai-Agent.svg)](https://github.com/manoj020218/KiCad-Ai-Agent/stargazers)
 
 </div>
 
@@ -49,8 +48,8 @@
 3. 克隆并构建：
 
 ```bash
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd KiCAD-MCP-Server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 npm install
 npm run build
 ```
@@ -90,9 +89,9 @@ VS Code 会自动检测 `.vscode/mcp.json` 并注册服务器。模板使用 `${
 
 ### 社区
 
-- [讨论区](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — 问题、想法、展示项目
-- [问题反馈](https://github.com/mixelpixx/KiCAD-MCP-Server/issues) — 错误报告和功能请求
+- [问题反馈](https://github.com/manoj020218/KiCad-Ai-Agent/issues) — 错误报告和功能请求
 - [贡献指南](../CONTRIBUTING.md)
+- 原项目讨论区：[mixelpixx/KiCAD-MCP-Server](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — 本分支目前尚未启用自己的讨论区
 
 ### AI 声明
 

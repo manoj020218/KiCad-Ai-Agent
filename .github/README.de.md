@@ -11,8 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](../docs/PLATFORM_GUIDE.md)
 [![KiCAD](https://img.shields.io/badge/KiCAD-9.0+-green.svg)](https://www.kicad.org/)
-[![Stars](https://img.shields.io/github/stars/mixelpixx/KiCAD-MCP-Server.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/stargazers)
-[![Discussions](https://img.shields.io/badge/community-Discussions-orange.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions)
+[![Stars](https://img.shields.io/github/stars/manoj020218/KiCad-Ai-Agent.svg)](https://github.com/manoj020218/KiCad-Ai-Agent/stargazers)
 
 </div>
 
@@ -49,8 +48,8 @@ Beschreibe was du bauen möchtest — und lass die KI die EDA-Arbeit übernehmen
 3. Klonen und bauen:
 
 ```bash
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd KiCAD-MCP-Server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 npm install
 npm run build
 ```
@@ -90,9 +89,9 @@ Beispielkonfiguration: `config/windows-config.example.json` oder `config/macos-c
 
 ### Community
 
-- [Diskussionen](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — Fragen, Ideen, Projekte zeigen
-- [Issues](https://github.com/mixelpixx/KiCAD-MCP-Server/issues) — Fehler und Feature-Wünsche
+- [Issues](https://github.com/manoj020218/KiCad-Ai-Agent/issues) — Fehler und Feature-Wünsche
 - [Mitwirken](../CONTRIBUTING.md)
+- Diskussionen des Original-Projekts: [mixelpixx/KiCAD-MCP-Server](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — dieser Fork hat noch keine eigenen Discussions aktiviert
 
 ### KI-Hinweis
 

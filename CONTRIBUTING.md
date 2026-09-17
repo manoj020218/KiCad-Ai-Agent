@@ -1,6 +1,6 @@
-# Contributing to KiCAD MCP Server
+# Contributing to KiCad-Ai-Agent
 
-Thank you for your interest in contributing to the KiCAD MCP Server! This guide will help you get started with development.
+Thank you for your interest in contributing to KiCad-Ai-Agent! This guide will help you get started with development. This project is a fork of [mixelpixx/KiCAD-MCP-Server](https://github.com/mixelpixx/KiCAD-MCP-Server) — see [NOTICE.md](NOTICE.md) for full upstream credit.
 
 ## Table of Contents
 
@@ -39,8 +39,8 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Clone the repository
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd kicad-mcp-server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 
 # Install Node.js dependencies
 npm install
@@ -64,8 +64,8 @@ pytest
 # Install Node.js from https://nodejs.org/
 
 # Clone the repository
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd kicad-mcp-server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 
 # Install Node.js dependencies
 npm install
@@ -90,8 +90,8 @@ pytest
 brew install node
 
 # Clone the repository
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd kicad-mcp-server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 
 # Install Node.js dependencies
 npm install
@@ -131,7 +131,7 @@ pre-commit run --all-files
 ## Project Structure
 
 ```
-kicad-mcp-server/
+KiCad-Ai-Agent/
 ├── .github/
 │   └── workflows/        # CI/CD pipelines
 ├── config/               # Configuration examples

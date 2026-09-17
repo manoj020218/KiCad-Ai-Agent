@@ -1,8 +1,8 @@
 # Documentation Index
 
-KiCAD MCP Server -- AI-assisted PCB design via Model Context Protocol
+KiCad-Ai-Agent -- AI-assisted PCB design via Model Context Protocol (fork of KiCAD MCP Server)
 
-**Version:** 2.2.3 | **Tools:** 122 | **Last Updated:** 2026-03-21
+**Version:** 2.6.0 | **Tools:** 146 | **Last Updated:** 2026-09-17
 
 ---
 
@@ -11,6 +11,7 @@ KiCAD MCP Server -- AI-assisted PCB design via Model Context Protocol
 | Document                                        | Description                                                    |
 | ----------------------------------------------- | -------------------------------------------------------------- |
 | [README](../README.md)                          | Project overview, installation, configuration, quick start     |
+| [Examples](../examples/)                        | 3 complete, validated projects — schematic through routed PCB and Gerbers |
 | [Client Configuration](CLIENT_CONFIGURATION.md) | MCP client setup (Claude Desktop, Cline, Claude Code)          |
 | [Platform Guide](PLATFORM_GUIDE.md)             | Linux vs Windows vs macOS differences                          |
 | [PCB Design Workflow](PCB_DESIGN_WORKFLOW.md)   | End-to-end design guide from project creation to manufacturing |

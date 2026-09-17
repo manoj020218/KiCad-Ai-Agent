@@ -209,8 +209,8 @@ and per-user KiCAD installs:
 2. **Or clone to user directory:**
    ```powershell
    cd $HOME\Documents
-   git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-   cd KiCAD-MCP-Server
+   git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+   cd KiCad-Ai-Agent
    .\setup-windows.ps1
    ```
 
@@ -453,7 +453,7 @@ If none of the above solutions work:
    - Claude Desktop log: `%APPDATA%\Claude\logs\mcp*.log`
 
 3. **Open a GitHub issue:**
-   - Go to: https://github.com/mixelpixx/KiCAD-MCP-Server/issues
+   - Go to: https://github.com/manoj020218/KiCad-Ai-Agent/issues
    - Title: "Windows Setup Issue: [brief description]"
    - Include:
      - Windows version (10 or 11)
@@ -503,7 +503,8 @@ When everything works, you should have:
 
 ---
 
-**Last Updated:** 2025-11-05
-**Maintained by:** KiCAD MCP Team
+**Last Updated:** 2025-11-05 (upstream), link fixed for this fork 2026-09-17
+**Maintained by:** KiCAD MCP Team (upstream); this fork adds
+platform-specific fixes and docs — see [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
 
-For the latest updates, see: https://github.com/mixelpixx/KiCAD-MCP-Server
+For the latest updates, see: https://github.com/manoj020218/KiCad-Ai-Agent

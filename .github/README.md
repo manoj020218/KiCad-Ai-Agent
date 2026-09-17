@@ -11,8 +11,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](../docs/PLATFORM_GUIDE.md)
 [![KiCAD](https://img.shields.io/badge/KiCAD-9.0+-green.svg)](https://www.kicad.org/)
-[![Stars](https://img.shields.io/github/stars/mixelpixx/KiCAD-MCP-Server.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/stargazers)
-[![Discussions](https://img.shields.io/badge/community-Discussions-orange.svg)](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions)
+[![Stars](https://img.shields.io/github/stars/manoj020218/KiCad-Ai-Agent.svg)](https://github.com/manoj020218/KiCad-Ai-Agent/stargazers)
 
 </div>
 
@@ -61,8 +60,8 @@ Describe what you want to build — and let AI handle the EDA work. Place compon
 3. Clone and build:
 
 ```bash
-git clone https://github.com/mixelpixx/KiCAD-MCP-Server.git
-cd KiCAD-MCP-Server
+git clone https://github.com/manoj020218/KiCad-Ai-Agent.git
+cd KiCad-Ai-Agent
 npm install
 npm run build
 ```
@@ -96,17 +95,17 @@ Example configs: `config/windows-config.example.json` or `config/macos-config.ex
 
 ### Community
 
-- [Discussions](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — questions, ideas, showcase
-- [Issues](https://github.com/mixelpixx/KiCAD-MCP-Server/issues) — bugs and feature requests
+- [Issues](https://github.com/manoj020218/KiCad-Ai-Agent/issues) — bugs and feature requests
 - [Contributing](../CONTRIBUTING.md)
+- Upstream [Discussions](https://github.com/mixelpixx/KiCAD-MCP-Server/discussions) — this fork doesn't have Discussions enabled yet, but general questions about the underlying tools may already be answered there
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=mixelpixx%2FKiCAD-MCP-Server&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=manoj020218%2FKiCad-Ai-Agent&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mixelpixx/KiCAD-MCP-Server&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mixelpixx/KiCAD-MCP-Server&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mixelpixx/KiCAD-MCP-Server&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=manoj020218/KiCad-Ai-Agent&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=manoj020218/KiCad-Ai-Agent&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=manoj020218/KiCad-Ai-Agent&type=date&legend=top-left" />
  </picture>
 </a>
 

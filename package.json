@@ -35,6 +35,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manoj020218/KiCad-Ai-Agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/manoj020218/KiCad-Ai-Agent/issues"
+  },
+  "homepage": "https://github.com/manoj020218/KiCad-Ai-Agent#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.21.0",
     "dotenv": "^17.0.0",
