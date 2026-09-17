@@ -109,6 +109,8 @@ Sync the schematic to the board.
 
 ### Place Components
 
+**Manual placement:**
+
 ```
 Move R1 to position x=15, y=25.
 Move LED1 to position x=25, y=25.
@@ -116,6 +118,54 @@ Align all resistors horizontally.
 ```
 
 **Tools:** `move_component`, `align_components`
+
+**Automatic placement:**
+
+```
+Suggest a placement for this board and apply it.
+```
+
+**Tool:** `suggest_placement` -- force-directed heuristic optimizer, not a
+router and not ML-based. Full parameter reference: [Tool
+Inventory](TOOL_INVENTORY.md).
+
+**What it actually does (honest capabilities, field-tested across 3 board
+builds, 2026-09-17):**
+
+- Minimizes total half-perimeter wire length (HPWL) via force-directed
+  clustering — connected parts (a decoupling cap and its IC, a divider's
+  two resistors) get pulled together. This genuinely worked: on all 3
+  test boards it took a stack of footprints piled on top of each other
+  (15-21 courtyard overlaps) down to 0 overlaps in one pass.
+- Weights power/high-current nets (matched by name fragment: `VBAT`,
+  `VBUS`, `VCC`, `3V3`, `5V`, ... or your own list) to route short and
+  direct.
+- Rotates parts in 90° steps to face their neighbors, reducing crossed
+  airwires.
+- Can be scoped (`refs`, `bounds`) to regroup one cluster at a time on a
+  denser board instead of re-shuffling everything, and can hold specific
+  parts fixed as anchors (`locked`) — connectors, mounting-constrained,
+  or RF parts.
+- Is a **dry run by default** (`apply: false`) — always inspect the
+  `proposals` and `score` before applying.
+
+**What it does *not* do — don't oversell this to a user:**
+
+- **Not routability-aware.** It optimizes geometric wire length, not
+  actual trace congestion, layer count, or via budget. A layout with a
+  great HPWL score can still be hard or impossible to fully autoroute on
+  2 layers.
+- **Not manufacturing/DFM-aware.** No thermal relief, EMI, controlled-
+  impedance, or creepage/clearance-beyond-courtyard reasoning.
+- **Not guaranteed to keep every part on the board.** See the Known
+  Issues note below — always verify with ground-truth pad data before
+  routing.
+- **Not a substitute for `run_drc`.** Its own `check_courtyard_overlaps`
+  pre-check is a heuristic, not the real design-rule engine.
+
+This is the honest ceiling for "smart" placement without a dedicated
+research effort — a real, useful heuristic optimizer, not an autonomous
+PCB-layout AI. Set expectations accordingly.
 
 > **Field-tested (2026-09-17):** neither `suggest_placement` nor
 > `check_courtyard_overlaps` reliably catch a footprint hanging off the
@@ -204,6 +254,27 @@ Show me a 2D view of the board.
 ```
 
 **Tool:** `get_board_2d_view`
+
+### Full-Build Verification Checklist
+
+Run checks **after every step that changes connectivity or placement**,
+not just once at the end — every real bug found while validating this
+project's example boards was one that a later step's check caught but an
+earlier one didn't, because the earlier step's own tool self-reported
+"success". Ground truth beats self-reported success at every stage:
+
+| After this step... | ...verify with | Don't trust alone |
+| --- | --- | --- |
+| Wiring a schematic sheet | `run_erc` (0 errors) + `generate_netlist` matches intended design | a batch tool's own "connected N pin(s)" message — see [Headless Authoring §3](HEADLESS_AUTHORING.md#3-verification-discipline) |
+| `sync_schematic_to_board` | re-check `nets_total` / `pads_assigned` against the schematic's net count | the call's own success message if it also warned about a save-guard conflict — see [Known Issues #10](KNOWN_ISSUES.md) |
+| `suggest_placement(apply: true)` or manual placement | `get_pads`/`get_component_list` (no filter) — eyeball every real coordinate against the board outline | `check_courtyard_overlaps` reporting clean — see [Known Issues #11](KNOWN_ISSUES.md) |
+| `autoroute` / manual routing | `run_drc` (0 errors; triage warnings) | the router's own pass score or "N unrouted" count alone |
+| Any `kicad-cli`-backed check timing out | retry the same call once before assuming a hang | a single 30s timeout — see [Known Issues #8](KNOWN_ISSUES.md) |
+
+A design is only *done* when `run_erc` on the schematic and `run_drc` on
+the board both come back clean (errors = 0; warnings triaged, not just
+ignored), independent of what any individual placement/routing/sync tool
+self-reported along the way.
 
 ### Save a Checkpoint
 

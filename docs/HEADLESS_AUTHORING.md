@@ -67,6 +67,12 @@ ERC and a render. Historically the batch tools could report success while
 the sheet was unparseable; load failures now error loudly, but the
 render+ERC+netlist habit remains the safety net.
 
+This same "don't trust a step's own self-reported success" discipline
+continues once the design moves to PCB layout — see [PCB Design
+Workflow: Full-Build Verification
+Checklist](PCB_DESIGN_WORKFLOW.md#full-build-verification-checklist) for
+the placement/routing/DRC side.
+
 ---
 
 ## 4. Reading ERC output

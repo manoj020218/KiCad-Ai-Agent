@@ -53,7 +53,11 @@ The default location is `~/.kicad-mcp/freerouting.jar`. You can override this wi
 
 ### Java Runtime (Option A -- Direct Execution)
 
-Freerouting 2.x requires Java 21 or higher.
+Java 21 or higher is required to run the **v2.1.0 jar this guide pins
+above**. This is *not* a general "Freerouting 2.x" requirement — see the
+version-pin note above: releases from v2.2.0 onward need a newer JDK than
+21, so if you ever bump the jar version, re-verify this requirement
+against that specific release rather than assuming it still holds.
 
 ```bash
 # Ubuntu/Debian
@@ -63,9 +67,20 @@ sudo apt install openjdk-21-jre
 java -version
 ```
 
+**Windows:** there is no system package manager equivalent — install a
+Java 21 JRE/JDK manually (e.g. [Eclipse Temurin
+21](https://adoptium.net/temurin/releases/?version=21)) and confirm
+`java -version` resolves it from PowerShell. Field-tested 2026-09-17: an
+existing Eclipse Adoptium JDK 21 install at `C:\Program Files\Eclipse
+Adoptium\jdk-21...\bin\java.exe` was picked up automatically by
+`check_freerouting` with no extra configuration — no environment variable
+or PATH change was needed beyond having Java 21 installed system-wide.
+The jar download itself (the `curl -L -o` command above) works as-is in
+PowerShell or Git Bash on Windows.
+
 ### Docker or Podman (Option B -- No Java Install Needed)
 
-If you do not have Java 21+ installed, the integration automatically falls back to Docker or Podman using the `eclipse-temurin:21-jre` image.
+If you do not have Java 21+ installed, the integration automatically falls back to Docker or Podman using the `eclipse-temurin:21-jre` image. This image matches the **v2.1.0 jar pinned above** — if you bump the jar version, bump this image tag to match whatever JDK that release actually needs (see the version-pin note above).
 
 ```bash
 # Pull the image (one-time)
