@@ -1,0 +1,76 @@
+{
+  "board": "D:\\IOT Device\\KiCAD\\Claude-KiCad\\KiCAD-MCP-Server\\examples\\555-astable\\555-astable.kicad_pcb",
+  "timestamp": "2026-09-17T18:20:45",
+  "total_violations": 6,
+  "violation_counts": {
+    "silk_edge_clearance": 1,
+    "silk_overlap": 5
+  },
+  "severity_counts": {
+    "error": 0,
+    "warning": 6,
+    "info": 0
+  },
+  "violations": [
+    {
+      "type": "silk_edge_clearance",
+      "severity": "warning",
+      "message": "Silkscreen clipped by board edge",
+      "location": {
+        "x": 0.0,
+        "y": 40.0,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 9.42,
+        "y": 15.916,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 9.42,
+        "y": 15.916,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 9.42,
+        "y": 14.916,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 6.77,
+        "y": 14.916,
+        "unit": "mm"
+      }
+    },
+    {
+      "type": "silk_overlap",
+      "severity": "warning",
+      "message": "Silkscreen clearance",
+      "location": {
+        "x": 11.754,
+        "y": 18.847,
+        "unit": "mm"
+      }
+    }
+  ]
+}

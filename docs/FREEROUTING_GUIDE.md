@@ -28,13 +28,28 @@ Download the Freerouting executable JAR:
 ```bash
 mkdir -p ~/.kicad-mcp
 curl -L -o ~/.kicad-mcp/freerouting.jar \
-  https://github.com/freerouting/freerouting/releases/download/v2.0.1/freerouting-2.0.1-executable.jar
+  https://github.com/freerouting/freerouting/releases/download/v2.1.0/freerouting-2.1.0.jar
 ```
 
 The default location is `~/.kicad-mcp/freerouting.jar`. You can override this with:
 
 - The `freeroutingJar` parameter on any tool call
 - The `FREEROUTING_JAR` environment variable
+
+> **Version pin, read before bumping (field-tested 2026-09-17):** the
+> v2.0.1 asset this guide used to point to has since been deleted from
+> GitHub (404). More importantly, **Freerouting v2.2.0 through the current
+> v2.4.1 are compiled for a newer JDK than "Java 21+"** — they fail
+> immediately with `UnsupportedClassVersionError: ... class file version
+> 69.0, this version ... only recognizes ... up to 65.0` under a real
+> Java 21 JRE (class file 65.0 = Java 21; 69.0 = Java 25). The Docker
+> fallback below is pinned to `eclipse-temurin:21-jre` and would hit the
+> **same** error with any jar newer than v2.1.0. v2.1.0 (build
+> 2025-04-12) is the newest release confirmed to actually run on Java 21
+> — verified end-to-end (`autoroute` completed successfully) on this
+> machine. If you need a newer Freerouting release, bump the Java
+> requirement (and the Docker image tag) to match what that release's
+> jar was compiled for — don't assume "Java 21+" still holds.
 
 ### Java Runtime (Option A -- Direct Execution)
 

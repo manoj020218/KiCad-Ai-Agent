@@ -117,6 +117,17 @@ Align all resistors horizontally.
 
 **Tools:** `move_component`, `align_components`
 
+> **Field-tested (2026-09-17):** neither `suggest_placement` nor
+> `check_courtyard_overlaps` reliably catch a footprint hanging off the
+> board edge — one placement pass genuinely put ~7.7mm of a resistor body
+> above the board's top edge while both tools reported a clean result.
+> Before routing, always pull `get_pads` or `get_component_list` (no
+> filter) and eyeball every real coordinate against the board outline —
+> that's the only check that caught it. Also: a 2-pin THT part's
+> `position` is its **pad-1 anchor**, not its body center — the second
+> pad lands `position ± pitch` after rotation, not `± half the body
+> length`. See [Known Issues #11](KNOWN_ISSUES.md) for the full writeup.
+
 ### Route Traces
 
 **Preferred approach -- pad-to-pad routing:**
@@ -177,6 +188,14 @@ Show me all DRC violations.
 ```
 
 **Tools:** `set_design_rules`, `run_drc`, `get_drc_violations`
+
+> **Field-tested (2026-09-17):** a `drill_out_of_range` DRC error doesn't
+> always mean a mistake — some library footprints (e.g. an RF module's
+> exposed-pad thermal/EMI via array) genuinely need finer tolerances than
+> a board's default `minHoleDiameter`. Read the "actual" value in the DRC
+> message and, if your target fab supports it, `set_design_rules` to
+> match rather than fighting the footprint. See
+> [Known Issues #12](KNOWN_ISSUES.md).
 
 ### Visual Inspection
 

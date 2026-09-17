@@ -156,15 +156,17 @@ schematic or the server is broken; cross-check with the file on disk
 
 ---
 
-### 9. `get_schematic_view`'s PNG conversion can silently fall back to raw SVG text
+### 9. `get_schematic_view`/`get_board_2d_view`'s PNG conversion can silently fall back to raw SVG text
 
 **Status:** KNOWN — Windows-specific dependency gap
 
-**Symptoms:** `get_schematic_view` (default `format: "png"`) returns a
-message `No PNG converter available — returning SVG. Install pymupdf,
-inkscape, or imagemagick.` followed by the full SVG as text — for a modest
-schematic this can be 150k+ characters, unusable for visual inspection and
-expensive in an LLM context window.
+**Symptoms:** `get_schematic_view` and `get_board_2d_view` (default
+`format: "png"`) return a message `No PNG converter available —
+returning SVG. Install pymupdf, inkscape, or imagemagick.` followed by the
+full SVG as text — for a modest schematic/board this can be 150k+
+characters, unusable for visual inspection and expensive in an LLM
+context window. Both tools share the same PNG conversion path, so this
+hits either one.
 
 **Root cause:** the server's PNG path needs `cairosvg`, which itself needs
 the native `libcairo-2.dll`. On Windows, `pip install cairosvg` installs
@@ -188,6 +190,135 @@ page.get_pixmap(matrix=fitz.Matrix(4, 4)).save("schematic.png")
 for Windows, or switch `get_schematic_view`'s own PNG path to use
 `pymupdf` instead of `cairosvg` — pymupdf does not have this native-DLL
 dependency problem.
+
+---
+
+### 10. `sync_schematic_to_board` can partially persist on a save-guard conflict
+
+**Status:** KNOWN — workaround is "just call it again"
+
+**Symptoms:** `sync_schematic_to_board` reports success with footprints
+and most nets added, but also returns a warning: `Auto-save refused: the
+on-disk PCB file's contents changed externally since this MCP session
+loaded it ... the in-memory mutation has NOT been written to disk.` A
+follow-up call against the same (reloaded) board then reports far fewer
+additions than expected — e.g. `0 footprints added, 1 nets added` — even
+though nothing about the schematic changed.
+
+**Root cause (observed, not fully diagnosed):** the main footprint/pad
+sync appears to complete and save, but a secondary write (net info,
+likely the same `net_settings` JSON-merge path described in issue #6)
+gets caught by the external-change guard separately and is dropped
+silently rather than erroring the whole call. Net effect: the board can
+end up momentarily missing one net (observed: a `PWR_FLAG` net) after an
+otherwise-successful-looking sync.
+
+**Workaround:** if `sync_schematic_to_board` returns an
+`autoSave.saved: false` / "changed externally" warning, don't treat the
+reported counts as final — reload the board (`open_board`) and call
+`sync_schematic_to_board` again with the same arguments. It's idempotent;
+the second call reports only what was actually still missing (in the
+observed case, exactly the one dropped net) and completes cleanly with no
+further warning.
+
+**More generally (field-tested across a whole PCB build session):** once
+any `kicad-cli`-backed tool (DRC, gerber/PDF export, 2D view, ...) reads
+the board file mid-session, the *next* board-mutating call is likely to
+hit this same "changed externally" guard, even though nothing outside
+the session actually edited the file — reading alone seems to be enough
+to update the tracked mtime in some cases. In-memory mutations still
+apply correctly across repeated guard trips (verified: 7 sequential
+`delete_trace` calls each reported the warning but all 7 nets' traces
+were genuinely gone by the time of the next `autoroute`), so it's safe to
+keep issuing mutating calls in-memory and do a single `save_board
+{force: true}` at the end of a sequence, rather than fighting the guard
+after every call.
+
+---
+
+### 11. `suggest_placement` can propose a position that hangs a footprint off the board edge, and `check_courtyard_overlaps`'s boundary check can miss it
+
+**Status:** KNOWN — validate placements by hand, don't trust the boundary
+check alone
+
+**Symptoms:** after `suggest_placement(apply: true)`, `run_drc` reports a
+`copper_edge_clearance` **error** (board edge clearance violated) plus
+`silk_edge_clearance` warnings — even though `check_courtyard_overlaps`
+was called on the exact same proposed positions beforehand and reported
+`boundary_violations: []` (zero).
+
+**Root cause (observed 2026-09-17):** on a 50×40mm board, `suggest_placement`
+proposed a `Resistor_THT:R_Axial_DIN0207_L6.3mm...` at `(20.5, 3.5)`
+rotation 90°. `get_component_list` on the applied board then showed that
+footprint's real bounding box as `min_y: -7.735mm` — i.e. ~7.7mm of the
+vertical resistor body extends **above the board's y=0 top edge**. The
+pre-apply `check_courtyard_overlaps` validation call against that same
+position did not flag it.
+
+Separately, `get_component_list`'s reported `boundingBox` for that same
+footprint+rotation did not match what `check_courtyard_overlaps` computed
+for a different position with the same rotation (width `6.4365mm` vs.
+`3.09mm` — height matched closely). One of the two is reading the wrong
+geometry (courtyard polygon vs. some other extent); which one wasn't
+pinned down this session.
+
+**Workaround:** after `suggest_placement(apply: true)`, don't stop at a
+clean `check_courtyard_overlaps` result — pull `get_component_list` (no
+bounding-box filter) and manually confirm every footprint's `boundingBox`
+falls inside the board outline with margin, *before* routing. If not,
+`move_component` it clear of the edge (verify the new spot with
+`check_courtyard_overlaps` first), delete any traces already routed to
+it (`delete_trace {net: ...}`), and re-run `autoroute`. Always finish
+with `run_drc` as the real ground truth — it caught what the placement
+tools' own pre-checks missed.
+
+**Second reproduction, sharper (2026-09-17, different board):** the same
+exact `positions` override (`{"R1": [10, 8, 90]}`) returned
+`boundary_violations: []` when passed together with 5 other refs in one
+batched call, then returned a real violation for the *identical* ref and
+coordinates moments later in an isolated single-ref call with nothing
+else on the board changed in between. The check is not just occasionally
+blind to real violations — it can give two different answers for the
+same declared input depending on call context. Also note:
+`get_pads`/`get_component_list`'s `position` field for a 2-pin THT part
+(resistor, capacitor) is the **pad-1 anchor**, not the body center — a
+90°-rotated resistor's second pad lands `position ± pitch` (e.g.
+10.16mm), not `position ± half-height`. Computing a "safe" position by
+assuming center-anchoring is exactly how this session first put a pad
+off-board. **The only check that proved reliable both times:** pull
+`get_pads` (or `get_component_list`) for the real, currently-applied
+board state and confirm every pad/bbox coordinate by eye — never trust a
+"clean" `check_courtyard_overlaps` result on its own, applied or virtual.
+
+---
+
+### 12. A footprint's own via/hole geometry can violate the board's default design rules
+
+**Status:** BY DESIGN — not a bug, but easy to mistake for one
+
+**Symptoms:** `run_drc` reports many `drill_out_of_range` **errors**
+(e.g. 12 of them) all clustered at the same footprint's location,
+immediately after `autoroute` on a freshly-synced board that otherwise
+looked fine.
+
+**Root cause:** some library footprints embed their own via/hole geometry
+with tighter tolerances than a generic board's default design rules — for
+example `RF_Module:ESP32-C3-WROOM-02`'s exposed-pad thermal/EMI ground
+array uses a grid of 0.2mm-drill through-hole vias (`pad 19`, repeated),
+while a freshly-created board's default `minHoleDiameter` is 0.3mm (a
+common budget-fab-safe default). This isn't a placement or routing
+mistake — it's the module's manufacturer-specified footprint genuinely
+needing finer tolerances than the board's default rule set allows.
+
+**Fix:** when a chosen part's datasheet/footprint calls for finer
+tolerances, relax the board's design rules to match — don't fight the
+footprint. `set_design_rules({minHoleDiameter: 0.2})` (matched to
+whatever the offending footprint actually needs; check the DRC message's
+"actual" value) resolved this cleanly with no other side effects
+(verified: 12 errors → 0 after the change, same board, same routing).
+Before finalizing a design that needs sub-0.3mm holes, confirm your
+target fab house actually supports that tolerance — it's a real
+manufacturing constraint, not just a KiCad setting.
 
 ---
 
