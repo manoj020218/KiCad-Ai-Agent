@@ -324,6 +324,32 @@ manufacturing constraint, not just a KiCad setting.
 
 ## Recently Fixed (v2.2.0 - v2.2.3)
 
+### `setup-windows.ps1`'s own startup self-test false-failed on any install path with a space (Fixed 2026-09-18)
+
+- **Symptom:** the setup script finished with every component `[OK]` (KiCAD,
+  pcbnew, Node.js, Python deps, build, config) but still reported
+  `Errors Encountered: Server startup test failed`.
+- **Root cause:** the diagnostic test step (`Step 9`) launched the server
+  with `Start-Process -FilePath "node" -ArgumentList $distPath`. PowerShell's
+  `-ArgumentList` does **not** quote a string argument for you — a
+  `$distPath` containing a space (e.g. anything under a folder with a
+  space in its name, which is extremely common on Windows —
+  `C:\Program Files\...`, `C:\Users\Name\OneDrive - Company\...`, or just
+  a project folder with a space in it) gets split at the space by node's
+  own argv parsing, and node tried to load the truncated first fragment
+  as a module: `Error: Cannot find module 'C:\Program'`. The actual MCP
+  server itself was never broken — every other setup step (including the
+  real, separately-run server, verified live) succeeded; only the
+  script's own 2-second smoke test was miscalling `Start-Process`.
+- **Fix:** quote the path explicitly:
+  `-ArgumentList "`"$distPath`""`. Verified against a real path
+  containing a space.
+- **If you hit this on an older checkout:** the failure is cosmetic —
+  everything else in the summary being `[OK]` means the server itself is
+  fine. Copy the generated config and try it in your MCP client; if it
+  connects, ignore the "Server startup test failed" line, or pull the
+  latest `setup-windows.ps1` for the fix.
+
 ### B.Cu Footprint Routing (Fixed v2.2.3)
 
 - `route_pad_to_pad` now correctly detects B.Cu footprints and inserts vias

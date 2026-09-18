@@ -318,9 +318,13 @@ if ($kicad -and $script:Results.ProjectBuilt) {
     $env:PYTHONPATH = $kicad.PythonLib
     $distPath = Join-Path $ProjectRoot "dist\index.js"
 
-    # Start the server process
+    # Start the server process. -ArgumentList takes the string as-is and does
+    # NOT quote it for us, so an unquoted path containing spaces (e.g. under
+    # "C:\Program Files\..." or any folder with a space in its name) gets
+    # split into multiple argv entries by node's own CLI parsing, and node
+    # tries to load the first fragment as a module path. Quote it explicitly.
     $process = Start-Process -FilePath "node" `
-                            -ArgumentList $distPath `
+                            -ArgumentList "`"$distPath`"" `
                             -NoNewWindow `
                             -PassThru `
                             -RedirectStandardError (Join-Path $env:TEMP "kicad-mcp-test-error.txt") `
