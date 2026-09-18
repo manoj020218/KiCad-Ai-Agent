@@ -82,6 +82,16 @@ scale"** — every design step is real inference against a real model, so
 normal usage limits/costs for that client apply. Don't expect it to be
 free if you're running it constantly across a team.
 
+**If you can't install Claude Desktop** (e.g. a locked-down school/lab
+computer with no admin rights to install a desktop app), be aware there
+is currently **no genuinely free path** to run this project: Claude Code
+CLI and API-key-based clients (Cline, OpenCode, your own agent) all
+require either a paid subscription or pay-per-use API credit — Claude
+Desktop's free tier is the only no-cost option, and it needs a normal
+desktop install. This is a real limitation for students on locked-down
+machines or with zero budget, not something this project currently works
+around.
+
 ---
 
 ## Prerequisites
