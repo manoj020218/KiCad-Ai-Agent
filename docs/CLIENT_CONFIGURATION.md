@@ -10,7 +10,7 @@ This guide shows how to configure the KiCAD MCP Server with various MCP-compatib
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Claude Desktop** | Linux: `~/.config/Claude/claude_desktop_config.json`<br>macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`<br>Windows: `%APPDATA%\Claude\claude_desktop_config.json` |
 | **Cline (VSCode)** | VSCode Settings → Extensions → Cline → MCP Settings                                                                                                                                        |
-| **Claude Code**    | `~/.config/claude-code/mcp_config.json`                                                                                                                                                    |
+| **Claude Code**    | `claude mcp add` (recommended) — or `~/.claude.json` (`mcpServers`, user scope) / project-local `.mcp.json`                                                                                |
 
 ---
 
@@ -141,18 +141,59 @@ Create `.vscode/settings.json` in your project:
 
 ## 3. Claude Code CLI
 
-### Configuration File
+No desktop app needed — Claude Code is a terminal-only CLI, and this
+entire project was built and validated through exactly this setup
+(no Claude Desktop involved at all).
 
-**File:** `~/.config/claude-code/mcp_config.json`
+> **Corrected 2026-09-18:** the config path and commands previously
+> documented here (`~/.config/claude-code/mcp_config.json`,
+> `claude-code mcp ...`) do not match the real, current Claude Code CLI
+> and were never verified. The command is `claude` (not `claude-code`),
+> and it stores MCP server config in `~/.claude.json` (or a project-local
+> `.mcp.json`), not the path previously shown. Verified live against a
+> working install (2026-09-18).
+
+### Recommended: `claude mcp add`
+
+Let the CLI write the config for you — simpler and less error-prone than
+hand-editing JSON (in particular, avoid quoting mistakes on a Windows
+path containing spaces):
+
+```bash
+# macOS/Linux
+claude mcp add kicad --scope user \
+  -e PYTHONPATH="/path/to/kicad/python/packages" \
+  -e LOG_LEVEL=info \
+  -- node /path/to/KiCad-Ai-Agent/dist/index.js
+```
+
+```powershell
+# Windows (PowerShell) — quote the path if it contains spaces
+claude mcp add kicad --scope user `
+  -e PYTHONPATH="C:\Program Files\KiCad\10.0\bin\Lib\site-packages" `
+  -e LOG_LEVEL=info `
+  -- node "C:\path\to\KiCad-Ai-Agent\dist\index.js"
+```
+
+`--scope user` registers it for you across all projects; use
+`--scope project` instead to scope it to the current working directory
+only (writes to `.mcp.json` there instead of `~/.claude.json`).
+
+### Manual config (for reference)
+
+If you prefer to edit it directly, this is the real shape Claude Code
+reads from `~/.claude.json`'s top-level `mcpServers` object (or a
+project-scoped `.mcp.json`) — captured from a verified working install:
 
 ```json
 {
   "mcpServers": {
     "kicad": {
+      "type": "stdio",
       "command": "node",
-      "args": ["/home/YOUR_USERNAME/MCP/KiCAD-MCP-Server/dist/index.js"],
+      "args": ["/path/to/KiCad-Ai-Agent/dist/index.js"],
       "env": {
-        "PYTHONPATH": "/usr/lib/kicad/lib/python3/dist-packages",
+        "PYTHONPATH": "/path/to/kicad/python/packages",
         "LOG_LEVEL": "info"
       }
     }
@@ -163,12 +204,12 @@ Create `.vscode/settings.json` in your project:
 ### Verify Configuration
 
 ```bash
-# List available MCP servers
-claude-code mcp list
-
-# Test KiCAD server connection
-claude-code mcp test kicad
+claude mcp list       # shows configured servers and connection status
+claude mcp get kicad  # shows this server's full resolved config
 ```
+
+Then start `claude` in any directory and ask it to do something with
+KiCad — e.g. "create a new KiCAD project" — to confirm the tools respond.
 
 ---
 
